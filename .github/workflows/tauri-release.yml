@@ -36,8 +36,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          cache: 'npm'
-          cache-dependency-path: seb_Atlantis/package-lock.json
+          # Disable built-in npm cache to avoid path resolution issues
+          cache: ''
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
