@@ -72,6 +72,19 @@ jobs:
         with:
           projectPath: ./
 
+      - name: Ensure no BOM in tauri.conf.json
+        run: |
+          $f = "src-tauri/tauri.conf.json"
+          $bytes = [System.IO.File]::ReadAllBytes($f)
+          if ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
+            $bytes = $bytes[3..($bytes.Length-1)]
+            [System.IO.File]::WriteAllBytes($f, $bytes)
+            Write-Host "BOM stripped from $f"
+          } else {
+            Write-Host "$f clean"
+          }
+        shell: pwsh
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -191,6 +204,7 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
