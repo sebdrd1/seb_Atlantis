@@ -24,7 +24,6 @@ jobs:
             bundle_type: msi
 
     runs-on: ${{ matrix.os }}
-    # NO defaults.run.working-directory - let each step decide
 
     steps:
       - name: Checkout repository
@@ -50,14 +49,12 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workdir: './seb_Atlantis/src-tauri'
+          workdir: './src-tauri'
 
       - name: Install frontend dependencies
-        working-directory: ./seb_Atlantis
         run: npm ci
 
       - name: Build frontend
-        working-directory: ./seb_Atlantis
         run: npm run build
 
       - name: Import signing key
@@ -66,7 +63,7 @@ jobs:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          workingDirectory: ./seb_Atlantis
+          workingDirectory: ./
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -80,14 +77,14 @@ jobs:
           releaseDraft: false
           releasePrerelease: false
           args: --bundle-type ${{ matrix.bundle_type }}
-          workingDirectory: ./seb_Atlantis
+          workingDirectory: ./
 
       - name: Upload MSI artifact
         if: matrix.bundle_type == 'msi'
         uses: actions/upload-artifact@v4
         with:
           name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
-          path: seb_Atlantis/src-tauri/target/release/bundle/msi/*.msi
+          path: src-tauri/target/release/bundle/msi/*.msi
           retention-days: 90
 
       - name: Upload NSIS artifact
@@ -95,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
-          path: seb_Atlantis/src-tauri/target/release/bundle/nsis/*.exe
+          path: src-tauri/target/release/bundle/nsis/*.exe
           retention-days: 90
 
   release:
