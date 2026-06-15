@@ -9,7 +9,6 @@ permissions:
   contents: write
 
 env:
-  # Force Node.js 24 compatibility for actions
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
@@ -19,15 +18,12 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
             bundle_type: nsis
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
             bundle_type: msi
 
     runs-on: ${{ matrix.os }}
-    # Set working directory to where tauri.conf.json is
     defaults:
       run:
         working-directory: ./seb_Atlantis
@@ -58,16 +54,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workdir: './seb_Atlantis/src-tauri'
-
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            seb_Atlantis/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('seb_Atlantis/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install frontend dependencies
         run: npm ci
