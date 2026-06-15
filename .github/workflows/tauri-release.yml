@@ -1,0 +1,149 @@
+name: Tauri Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
+            bundle_type: nsis
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
+            bundle_type: msi
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Windows dependencies
+        if: runner.os == 'Windows'
+        run: |
+          choco install webview2-runtime -y
+          choco install llvm -y
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Import signing key
+        id: import_key
+        uses: tauri-apps/tauri-action@v0
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseBody: "Release ${{ github.ref_name }}"
+          releaseDraft: false
+          releasePrerelease: false
+          args: --bundle-type ${{ matrix.bundle_type }}
+
+      - name: Rename artifacts for clarity
+        if: always()
+        run: |
+          $bundleDir = "src-tauri/target/release/bundle"
+          if (Test-Path "$bundleDir/msi") {
+            Get-ChildItem "$bundleDir/msi/*.msi" | ForEach-Object {
+              $newName = "seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi"
+              Copy-Item $_.FullName -Destination "$bundleDir/$newName" -Force
+            }
+          }
+          if (Test-Path "$bundleDir/nsis") {
+            Get-ChildItem "$bundleDir/nsis/*.exe" | ForEach-Object {
+              $newName = "seb_Atlantis-${{ github.ref_name }}_x64-setup.exe"
+              Copy-Item $_.FullName -Destination "$bundleDir/$newName" -Force
+            }
+          }
+
+      - name: Upload MSI artifact
+        if: matrix.bundle_type == 'msi'
+        uses: actions/upload-artifact@v4
+        with:
+          name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
+          path: src-tauri/target/release/bundle/seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
+          retention-days: 90
+
+      - name: Upload NSIS artifact
+        if: matrix.bundle_type == 'nsis'
+        uses: actions/upload-artifact@v4
+        with:
+          name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
+          path: src-tauri/target/release/bundle/seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
+          retention-days: 90
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body: |
+            ## seb_Atlantis ${{ github.ref_name }}
+            
+            ### Downloads
+            - **Windows Installer (MSI)**: `seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi`
+            - **Windows Setup (NSIS)**: `seb_Atlantis-${{ github.ref_name }}_x64-setup.exe`
+            
+            ### Auto-update
+            This release is configured for Tauri auto-update. The app will automatically check for updates on startup.
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*
