@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+env:
+  # Force Node.js 24 compatibility for actions
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     strategy:
@@ -23,6 +27,10 @@ jobs:
             bundle_type: msi
 
     runs-on: ${{ matrix.os }}
+    # Set working directory to where tauri.conf.json is
+    defaults:
+      run:
+        working-directory: ./seb_Atlantis
 
     steps:
       - name: Checkout repository
@@ -33,6 +41,7 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'npm'
+          cache-dependency-path: seb_Atlantis/package-lock.json
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -47,14 +56,16 @@ jobs:
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+        with:
+          workdir: './seb_Atlantis/src-tauri'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
             ~/.npm
-            node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+            seb_Atlantis/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('seb_Atlantis/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
@@ -65,11 +76,12 @@ jobs:
         run: npm run build
 
       - name: Import signing key
-        id: import_key
         uses: tauri-apps/tauri-action@v0
         env:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          workingDirectory: ./seb_Atlantis
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -83,30 +95,14 @@ jobs:
           releaseDraft: false
           releasePrerelease: false
           args: --bundle-type ${{ matrix.bundle_type }}
-
-      - name: Rename artifacts for clarity
-        if: always()
-        run: |
-          $bundleDir = "src-tauri/target/release/bundle"
-          if (Test-Path "$bundleDir/msi") {
-            Get-ChildItem "$bundleDir/msi/*.msi" | ForEach-Object {
-              $newName = "seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi"
-              Copy-Item $_.FullName -Destination "$bundleDir/$newName" -Force
-            }
-          }
-          if (Test-Path "$bundleDir/nsis") {
-            Get-ChildItem "$bundleDir/nsis/*.exe" | ForEach-Object {
-              $newName = "seb_Atlantis-${{ github.ref_name }}_x64-setup.exe"
-              Copy-Item $_.FullName -Destination "$bundleDir/$newName" -Force
-            }
-          }
+          workingDirectory: ./seb_Atlantis
 
       - name: Upload MSI artifact
         if: matrix.bundle_type == 'msi'
         uses: actions/upload-artifact@v4
         with:
           name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
-          path: src-tauri/target/release/bundle/seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
+          path: seb_Atlantis/src-tauri/target/release/bundle/msi/*.msi
           retention-days: 90
 
       - name: Upload NSIS artifact
@@ -114,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
-          path: src-tauri/target/release/bundle/seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
+          path: seb_Atlantis/src-tauri/target/release/bundle/nsis/*.exe
           retention-days: 90
 
   release:
