@@ -129,16 +129,24 @@ jobs:
         run: |
           node -e "
           const fs = require('fs');
-          const glob = require('glob');
+          const path = require('path');
           const version = '${{ github.ref_name }}';
           const versionClean = version.replace(/^v/, '');
           
-          // Read signature files
-          const sigNsisFiles = glob.sync('src-tauri/target/release/bundle/nsis/*.exe.sig');
-          const sigMsiFiles = glob.sync('src-tauri/target/release/bundle/msi/*.msi.sig');
+          // Find signature files using fs.readdirSync (no glob dependency)
+          function findSigFile(dir, pattern) {
+            try {
+              const files = fs.readdirSync(dir);
+              const match = files.find(f => f.endsWith(pattern));
+              return match ? path.join(dir, match) : null;
+            } catch { return null; }
+          }
           
-          const sigNsis = sigNsisFiles.length > 0 ? fs.readFileSync(sigNsisFiles[0], 'utf8').trim() : '';
-          const sigMsi = sigMsiFiles.length > 0 ? fs.readFileSync(sigMsiFiles[0], 'utf8').trim() : '';
+          const sigNsisPath = findSigFile('src-tauri/target/release/bundle/nsis', '.exe.sig');
+          const sigMsiPath = findSigFile('src-tauri/target/release/bundle/msi', '.msi.sig');
+          
+          const sigNsis = sigNsisPath ? fs.readFileSync(sigNsisPath, 'utf8').trim() : '';
+          const sigMsi = sigMsiPath ? fs.readFileSync(sigMsiPath, 'utf8').trim() : '';
           
           const manifest = {
             version: versionClean,
@@ -179,4 +187,5 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
