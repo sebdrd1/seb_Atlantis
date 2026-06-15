@@ -18,10 +18,10 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            bundle_type: nsis
+            bundles: nsis
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            bundle_type: msi
+            bundles: msi
 
     runs-on: ${{ matrix.os }}
 
@@ -75,12 +75,12 @@ jobs:
           releaseName: ${{ github.ref_name }}
           releaseBody: "Release ${{ github.ref_name }}"
           releaseDraft: false
-          releasePrerelease: false
-          args: --bundle-type ${{ matrix.bundle_type }}
+          prerelease: false
+          args: --bundles ${{ matrix.bundles }}
           projectPath: ./
 
       - name: Upload MSI artifact
-        if: matrix.bundle_type == 'msi'
+        if: matrix.bundles == 'msi'
         uses: actions/upload-artifact@v4
         with:
           name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
@@ -88,7 +88,7 @@ jobs:
           retention-days: 90
 
       - name: Upload NSIS artifact
-        if: matrix.bundle_type == 'nsis'
+        if: matrix.bundles == 'nsis'
         uses: actions/upload-artifact@v4
         with:
           name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
