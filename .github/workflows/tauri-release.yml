@@ -51,7 +51,7 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workdir: './src-tauri'
+          workspaces: 'src-tauri'
 
       - name: Install frontend dependencies
         run: npm ci
@@ -63,18 +63,21 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Ensure no BOM in tauri.conf.json
+      - name: Strip BOM from JSON configs
         run: |
           node -e "
           const fs = require('fs');
-          const f = 'src-tauri/tauri.conf.json';
-          const buf = fs.readFileSync(f);
-          if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
-            fs.writeFileSync(f, buf.slice(3));
-            console.log('BOM stripped from ' + f);
-          } else {
-            console.log(f + ' clean');
+          function stripBom(file) {
+            const buf = fs.readFileSync(file);
+            if (buf[0] === 0xEF && buf[1] === 0xBB && buf[2] === 0xBF) {
+              fs.writeFileSync(file, buf.slice(3));
+              console.log('BOM stripped: ' + file);
+            } else {
+              console.log('Clean: ' + file);
+            }
           }
+          stripBom('package.json');
+          stripBom('src-tauri/tauri.conf.json');
           "
         shell: bash
 
@@ -206,6 +209,7 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
