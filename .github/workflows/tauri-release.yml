@@ -57,7 +57,7 @@ jobs:
         run: npm ci
 
       - name: Build Rust (release)
-        run: cargo build --release --manifest-path ./src-tauri/Cargo.toml
+        run: cargo build --release
         working-directory: ./src-tauri
 
       - name: Build frontend
@@ -191,6 +191,7 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
