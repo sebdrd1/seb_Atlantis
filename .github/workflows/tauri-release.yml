@@ -56,6 +56,10 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Build Rust (release)
+        run: cargo build --release --manifest-path ./src-tauri/Cargo.toml
+        working-directory: ./src-tauri
+
       - name: Build frontend
         run: npm run build
 
@@ -187,5 +191,6 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
