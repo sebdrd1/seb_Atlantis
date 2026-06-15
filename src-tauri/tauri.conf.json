@@ -1,68 +1,64 @@
-﻿{
-    "$schema":  "https://tauri.app/schemas/tauri-config-2.json",
-    "identifier":  "com.seb.atlantis",
-    "productName":  "seb_Atlantis",
-    "version":  "0.1.1",
-    "build":  {
-                  "frontendDist":  "../dist",
-                  "devUrl":  "http://localhost:1420",
-                  "beforeDevCommand":  "npm run dev",
-                  "beforeBuildCommand":  "npm run build"
-              },
-    "app":  {
-                "windows":  [
-                                {
-                                    "title":  "seb_Atlantis",
-                                    "width":  1200,
-                                    "height":  800,
-                                    "minWidth":  800,
-                                    "minHeight":  600,
-                                    "center":  true,
-                                    "resizable":  true,
-                                    "fullscreen":  false,
-                                    "decorations":  true,
-                                    "transparent":  false
-                                }
-                            ],
-                "security":  {
-                                 "csp":  null
-                             }
-            },
-    "bundle":  {
-                   "active":  true,
-                   "targets":  "all",
-                   "icon":  [
-                                "icons/32x32.png",
-                                "icons/128x128.png",
-                                "icons/128x128@2x.png",
-                                "icons/icon.icns",
-                                "icons/icon.ico"
-                            ],
-                   "windows":  {
-                                   "webviewInstallMode":  {
-                                                              "type":  "downloadBootstrapper"
-                                                          }
-                               }
-               },
-    "plugins":  {
-                    "sql":  {
-                                "preload":  [
-                                                "sqlite:seb_atlantis.db"
-                                            ]
-                            },
-                    "fs":  {
-                               "requireLiteralLeadingDot":  false
-                           },
-                    "shell":  {
-                                  "open":  true
-                              },
-                    "updater":  {
-                                    "active":  true,
-                                    "endpoints":  [
-                                                      "https://github.com/sebdrd1/seb_Atlantis/releases/latest/download/{{target}}/{{current_version}}"
-                                                  ],
-                                    "dialog":  true,
-                                    "pubkey":  "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFCRkY1QzA0NUREMzQyREUKUldUZVF0TmRCRnovcXdkTUlDY3J2RkdwaytiTmQrTDRtNC9INUs3cU8rSzFnY25FM3F1TkJHSGkK"
-                                }
-                }
+{
+  "$schema": "https://tauri.app/schemas/tauri-config-2.json",
+  "identifier": "com.seb.atlantis",
+  "productName": "seb_Atlantis",
+  "version": "0.1.1",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "seb_Atlantis",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    }
+  },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:seb_atlantis.db"]
+    },
+    "fs": {
+      "requireLiteralLeadingDot": false
+    },
+    "shell": {
+      "open": true
+    },
+    "updater": {
+      "active": true,
+      "endpoints": ["https://github.com/sebdrd1/seb_Atlantis/releases/latest/download/{{target}}/{{current_version}}"],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEFCRkY1QzA0NUREMzQyREUKUldUZVF0TmRCRnovcXdkTUlDY3J2RkdwaytiTmQrTDRtNC9INUs3cU8rSzFnY25FM3F1TkJHSGkK"
+    }
+  }
 }
