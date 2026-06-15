@@ -24,9 +24,7 @@ jobs:
             bundle_type: msi
 
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: ./seb_Atlantis
+    # NO defaults.run.working-directory - let each step decide
 
     steps:
       - name: Checkout repository
@@ -36,7 +34,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          # Disable built-in npm cache to avoid path resolution issues
           cache: ''
 
       - name: Install Rust toolchain
@@ -56,9 +53,11 @@ jobs:
           workdir: './seb_Atlantis/src-tauri'
 
       - name: Install frontend dependencies
+        working-directory: ./seb_Atlantis
         run: npm ci
 
       - name: Build frontend
+        working-directory: ./seb_Atlantis
         run: npm run build
 
       - name: Import signing key
