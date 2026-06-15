@@ -2,7 +2,7 @@
     "$schema":  "https://tauri.app/schemas/tauri-config-2.json",
     "identifier":  "com.seb.atlantis",
     "productName":  "seb_Atlantis",
-    "version":  "0.1.1",
+    "version":  "0.1.2",
     "build":  {
                   "frontendDist":  "../dist",
                   "devUrl":  "http://localhost:1420",
