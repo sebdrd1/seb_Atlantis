@@ -63,15 +63,6 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Import signing key
-        uses: tauri-apps/tauri-action@v0
-        env:
-          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: ./
-
       - name: Ensure no BOM in tauri.conf.json
         run: |
           $f = "src-tauri/tauri.conf.json"
@@ -84,6 +75,15 @@ jobs:
             Write-Host "$f clean"
           }
         shell: pwsh
+
+      - name: Import signing key
+        uses: tauri-apps/tauri-action@v0
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: ./
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -204,6 +204,7 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
