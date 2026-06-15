@@ -57,13 +57,25 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Ensure tauri.conf.json has no BOM
+        run: |
+          # Read and rewrite without BOM using Node.js
+          node -e "
+            const fs = require('fs');
+            const content = fs.readFileSync('src-tauri/tauri.conf.json', 'utf8');
+            const json = JSON.parse(content);
+            json.version = '${{ github.ref_name }}'.replace('v', '');
+            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(json, null, 2), 'utf8');
+            console.log('tauri.conf.json rewritten without BOM, version:', json.version);
+          "
+
       - name: Import signing key
         uses: tauri-apps/tauri-action@v0
         env:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          workingDirectory: ./
+          projectPath: ./
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -77,7 +89,7 @@ jobs:
           releaseDraft: false
           releasePrerelease: false
           args: --bundle-type ${{ matrix.bundle_type }}
-          workingDirectory: ./
+          projectPath: ./
 
       - name: Upload MSI artifact
         if: matrix.bundle_type == 'msi'
