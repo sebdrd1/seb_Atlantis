@@ -1,4 +1,4 @@
-name: Tauri Release
+﻿name: Tauri Release
 
 on:
   push:
@@ -55,10 +55,6 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
-
-      - name: Build Rust (release)
-        run: cargo build --release
-        working-directory: ./src-tauri
 
       - name: Build frontend
         run: npm run build
@@ -206,3 +202,4 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
