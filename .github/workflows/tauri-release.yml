@@ -1,4 +1,4 @@
-﻿name: Tauri Release
+name: Tauri Release
 
 on:
   push:
@@ -18,10 +18,6 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            bundles: nsis
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: msi
 
     runs-on: ${{ matrix.os }}
     permissions:
@@ -56,14 +52,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build Rust (release)
-        run: cargo build --release
-        working-directory: ./src-tauri
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Strip BOM from JSON configs
+      - name: Strip BOM from JSON configs (fix for tauri-conf parsing)
         run: |
           node -e "
           const fs = require('fs');
@@ -81,46 +70,40 @@ jobs:
           "
         shell: bash
 
-      - name: Build Tauri app (manual with debug)
-        run: |
-          echo "=== Building Tauri ${{ matrix.bundles }} ==="
-          npx tauri build --bundles ${{ matrix.bundles }} --verbose 2>&1 | tee tauri-build.log
-        working-directory: ./
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          projectPath: ./
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Release ${{ github.ref_name }}'
+          releaseBody: 'Auto-generated release for ${{ github.ref_name }}'
+          releaseDraft: false
+          releasePrerelease: false
+          args: --bundles msi,nsis --verbose
 
-      - name: Upload MSI artifact
-        if: matrix.bundles == 'msi'
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: seb_Atlantis-${{ github.ref_name }}_x64_en-US.msi
-          path: src-tauri/target/release/bundle/msi/*.msi
+          name: tauri-artifacts-${{ github.ref_name }}
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi.sig
+            src-tauri/target/release/bundle/nsis/*.exe.sig
           retention-days: 90
-
-      - name: Upload NSIS artifact
-        if: matrix.bundles == 'nsis'
-        uses: actions/upload-artifact@v4
-        with:
-          name: seb_Atlantis-${{ github.ref_name }}_x64-setup.exe
-          path: src-tauri/target/release/bundle/nsis/*.exe
-          retention-days: 90
-
-      - name: Upload build log (debug)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tauri-build-log-${{ matrix.bundles }}
-          path: tauri-build.log
-          retention-days: 30
 
       - name: Generate Tauri Update Manifest
-        if: matrix.bundles == 'nsis'
         run: |
           node -e "
           const fs = require('fs');
           const path = require('path');
           const version = '${{ github.ref_name }}';
           const versionClean = version.replace(/^v/, '');
-          
-          // Find signature files using fs.readdirSync (no glob dependency)
+
           function findSigFile(dir, pattern) {
             try {
               const files = fs.readdirSync(dir);
@@ -128,13 +111,13 @@ jobs:
               return match ? path.join(dir, match) : null;
             } catch { return null; }
           }
-          
+
           const sigNsisPath = findSigFile('src-tauri/target/release/bundle/nsis', '.exe.sig');
           const sigMsiPath = findSigFile('src-tauri/target/release/bundle/msi', '.msi.sig');
-          
+
           const sigNsis = sigNsisPath ? fs.readFileSync(sigNsisPath, 'utf8').trim() : '';
           const sigMsi = sigMsiPath ? fs.readFileSync(sigMsiPath, 'utf8').trim() : '';
-          
+
           const manifest = {
             version: versionClean,
             notes: `Release ${version}`,
@@ -150,7 +133,7 @@ jobs:
               }
             }
           };
-          
+
           fs.writeFileSync('latest.json', JSON.stringify(manifest, null, 2));
           console.log('=== Generated latest.json ===');
           console.log(JSON.stringify(manifest, null, 2));
@@ -158,7 +141,6 @@ jobs:
         shell: bash
 
       - name: Deploy Update Manifest to GitHub Pages
-        if: matrix.bundles == 'nsis'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -174,14 +156,3 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-
-
-
-
-
-
-
-
-
