@@ -63,6 +63,16 @@ jobs:
           "
         shell: bash
 
+      - name: Read Tauri version from config
+        id: tauri_version
+        run: |
+          node -e "
+          const fs = require('fs');
+          const config = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+          console.log('TAURI_VERSION=' + config.version);
+          " >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -75,7 +85,8 @@ jobs:
           releaseName: 'Release ${{ github.ref_name }}'
           releaseBody: 'Auto-generated release for ${{ github.ref_name }}'
           releaseDraft: false
-          releasePrerelease: false
+          prerelease: false
+          includeUpdaterJson: true
           args: --bundles msi,nsis --verbose
 
       - name: Upload build artifacts
@@ -94,8 +105,9 @@ jobs:
           node << 'NODE_EOF'
           const fs = require('fs');
           const path = require('path');
-          const version = '${{ github.ref_name }}';
-          const versionClean = version.replace(/^v/, '');
+          const tagVersion = '${{ github.ref_name }}';
+          const tagVersionClean = tagVersion.replace(/^v/, '');
+          const tauriVersion = '${{ steps.tauri_version.outputs.TAURI_VERSION }}';
 
           function findSigFile(dir, pattern) {
             try {
@@ -112,17 +124,17 @@ jobs:
           const sigMsi = sigMsiPath ? fs.readFileSync(sigMsiPath, 'utf8').trim() : '';
 
           const manifest = {
-            version: versionClean,
-            notes: 'Release ' + version,
+            version: tagVersionClean,
+            notes: 'Release ' + tagVersion,
             pub_date: new Date().toISOString(),
             platforms: {
               'windows-x86_64': {
                 signature: sigNsis,
-                url: 'https://github.com/sebdrd1/seb_Atlantis/releases/download/' + version + '/seb_Atlantis_' + versionClean + '_x64-setup.exe'
+                url: 'https://github.com/sebdrd1/seb_Atlantis/releases/download/' + tagVersion + '/seb_Atlantis_' + tauriVersion + '_x64-setup.exe'
               },
               'windows-x86_64-msi': {
                 signature: sigMsi,
-                url: 'https://github.com/sebdrd1/seb_Atlantis/releases/download/' + version + '/seb_Atlantis_' + versionClean + '_x64_en-US.msi'
+                url: 'https://github.com/sebdrd1/seb_Atlantis/releases/download/' + tagVersion + '/seb_Atlantis_' + tauriVersion + '_x64_en-US.msi'
               }
             }
           };
