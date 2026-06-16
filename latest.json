@@ -1,0 +1,15 @@
+{
+  "version": "0.1.22",
+  "notes": "Release v0.1.22",
+  "pub_date": "2026-06-16T08:31:43.221Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "",
+      "url": "https://github.com/sebdrd1/seb_Atlantis/releases/download/v0.1.22/seb_Atlantis_0.1.20_x64-setup.exe"
+    },
+    "windows-x86_64-msi": {
+      "signature": "",
+      "url": "https://github.com/sebdrd1/seb_Atlantis/releases/download/v0.1.22/seb_Atlantis_0.1.20_x64_en-US.msi"
+    }
+  }
+}
