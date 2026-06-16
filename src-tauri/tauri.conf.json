@@ -1,4 +1,4 @@
-{
+﻿{
     "$schema":  "https://tauri.app/schemas/tauri-config-2.json",
     "identifier":  "com.seb.atlantis",
     "productName":  "seb_Atlantis",

@@ -77,6 +77,13 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Setup Tauri signing key
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+        run: |
+          echo "$TAURI_PRIVATE_KEY" > tauri-private-key.pem
+          echo "TAURI_PRIVATE_KEY_PATH=$(pwd)/tauri-private-key.pem" >> $GITHUB_ENV
+
       - name: Build Tauri app (manual with debug)
         run: |
           echo "=== Building Tauri ${{ matrix.bundles }} ==="
