@@ -1,4 +1,4 @@
-﻿name: Tauri Release
+name: Tauri Release
 
 on:
   push:
@@ -56,9 +56,6 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build frontend
-        run: npm run build
-
       - name: Strip BOM from JSON configs
         run: |
           node -e "
@@ -76,6 +73,9 @@ jobs:
           stripBom('src-tauri/tauri.conf.json');
           "
         shell: bash
+
+      - name: Build frontend
+        run: npm run build
 
       - name: Build Tauri app (manual with debug)
         run: |
@@ -202,4 +202,3 @@ jobs:
           allow_empty_commit: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
